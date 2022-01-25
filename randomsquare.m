@@ -115,3 +115,4 @@ F(:,ww) = F(:,ww)./norm(F(:,ww));
 A(:,ww) = mzs(:,ww)./norm(mzs(:,ww));
 
 end
+end
