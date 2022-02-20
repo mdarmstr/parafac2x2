@@ -4,16 +4,16 @@ function [X,F,D,A,sfpts] = randomsquare
 
 %settings
 numMSp = 20;
-numFac = 5;
+numFac = 3;
 mzs = 761;
-jitter1 = 1.5;
-jitter2 = 25;
+jitter1 = 1.5; %1.5
+jitter2 = 25; %25
 mods = 20;
 scans = 200;
-peakstd1 = 0.75;
-peakstd2 = 20;
+peakstd1 = 0.75; %0.75
+peakstd2 = 20; %20
 smpls = 8;
-SNR = 500;
+SNR = 50;
 
 A = zeros(mzs,numFac);
 
@@ -69,7 +69,8 @@ for qq = 1:smpls
     sf = surfacfus(pts{:});%plotF(:,:,1),plotF(:,:,2),plotF(:,:,3));
     sfpts(:,:,:,qq) = sf;
     
-    Xtemp(:,:,qq) = (F(:,:,qq)*D(:,:,qq)*A' + 6*(max(max(max(F(:,:,qq))))/SNR) + (max(max(max(F(:,:,qq))))/SNR).*randn(scans*mods,mzs))*10e4;
+    Xtemp(:,:,qq) = (F(:,:,qq)*D(:,:,qq)*A' + (1/SNR)*sqrt(var(F(:,:,qq)*D(:,:,qq)*A',0,'all')).*randn(scans*mods,mzs));
+    %Xtemp(:,:,qq) = (F(:,:,qq)*D(:,:,qq)*A' +6*sqrt(var(F(:,:,qq)*D(:,:,qq)*A',0,'all'))+ 1e-3*randn(size(F(:,:,qq)*D(:,:,qq)*A'))*sqrt(var(F(:,:,qq)*D(:,:,qq)*A',0,'all')))*1e4; 
     Xtemp2 = reshape(Xtemp(:,:,qq),[scans,mods,mzs]);
     X(:,:,:,qq) = permute(Xtemp2,[1,3,2]);
     %X(:,:,:,qq) = X(:,:,:,qq) + (max(max(max(F)))/SNR).*randn(scans,mzs,mods);
@@ -102,7 +103,6 @@ for ll = 1:dim(2)
     
 end
 
-
 F(:,ww) = ytr2(:);
 F(:,ww) = F(:,ww)./norm(F(:,ww));
 F(:,ww) = F(:,ww).*SNRs(ww);
@@ -115,4 +115,5 @@ F(:,ww) = F(:,ww)./norm(F(:,ww));
 A(:,ww) = mzs(:,ww)./norm(mzs(:,ww));
 
 end
+
 end
