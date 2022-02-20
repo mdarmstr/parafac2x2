@@ -11,13 +11,14 @@ function [F,A,D,pvar,SSR] = nnparafac2x2seq(Xijkl,R)
 %
 
 %Convergence properties
-eps = 1e-3;
+eps = 1e-5;
 iter = 1;
 maxiter = 10000;
 coupit = 10;
 nnls = 2; %1 for fnnls, 2 for fcnnls, 3 for cls
 animate = 1;
-omg = 4;
+omg = 2;
+YNorm = norm(Xijkl(:))^2;
 
 sz = size(Xijkl);
 
@@ -65,6 +66,11 @@ end
 % end
 
 for kl = 1:sz(3)*sz(4)
+    [U,~,V] = svds(Bkl(:,:,kl)*Bskl,R);
+    Pkl(:,:,kl) = U(:,:)*V(:,:)';
+end
+
+for kl = 1:sz(3)*sz(4)
    mkl(kl) = norm(Bkl(:,:,kl)*Dkl(:,:,kl)*Akl','fro')./norm(Bkl(:,:,kl),'fro'); 
 end
 
@@ -72,29 +78,39 @@ Bil = rand(sz(3),R,sz(1)*sz(4));
 Dil = repmat(F1,[1,1,sz(1)*sz(4)]);
 Bsil = rand(R,R);
 
+for il = 1:sz(1)*sz(4)
+    [U,~,V] = svds(Bil(:,:,il)*Bsil,R);
+    Pil(:,:,il) = U(:,:)*V(:,:)';
+end
+
+
+for il = 1:sz(1)*sz(4)
+    mil(il) = norm(Bil(:,:,il)*Dil(:,:,il)*Ail','fro')./norm(Bil(:,:,il),'fro');
+end
+
 for rr = 1:R
     Bsil(:,rr) = Bsil(:,rr)./norm(Bsil(:,rr));
 end
 
 for il = 1:sz(1)*sz(4)
-    %Xhil = Bil(:,:,il)*Dil(:,:,il)*A';
-    %mil(il) = sum(sum(sum(Bil(:,:,il)*Dil(:,:,il)*Ail')))./sum(sum(sum(Bil(:,:,il))));
-    mil(il) = norm(Bil(:,:,il)*Dil(:,:,il)*Ail','fro')./norm(Bil(:,:,il),'fro');
+    XHil(il) = norm(Xil(:,:,il) - Bil(:,:,il)*(Dil(:,:,il))*Ail','fro')^2;
+    mhil(il) = mil(il)*norm(Bil(:,:,il) - Pil(:,:,il)*Bsil,'fro')^2; 
 end
 
 %mA = 0.033; %mass spectral coupling constant
 
 for kl = 1:sz(3)*sz(4)
-    XHkl(:,:,kl) = Xkl(:,:,kl) - Bkl(:,:,kl)*(Dkl(:,:,kl))*Akl'; %+ mkl(kl)*norm(Bkl(:,:,kl) - Pkl(:,:,kl)*Bskl,'fro')^2;
+    XHkl(kl) = norm(Xkl(:,:,kl) - Bkl(:,:,kl)*(Dkl(:,:,kl))*Akl','fro')^2; 
+    mhkl(kl) = mkl(kl)*norm(Bkl(:,:,kl) - Pkl(:,:,kl)*Bskl,'fro')^2;
 end
 
-for il = 1:sz(3)*sz(4)
-    XHil(:,:,il) = Xil(:,:,il) - Bil(:,:,il)*(Dil(:,:,il))*Ail';% + mil(il).*norm(Bil(:,:,il) - Pil(:,:,il)*Bsil,'fro')^2;
-end
+mA = (10^(omg))*(sum(XHkl) +sum(XHil));
 
-mA = (10^(omg))*(norm(sum(XHkl,3),'fro') + norm(sum(XHil,3),'fro'))/norm(Akl,'fro');
+mha = mA*norm(Akl - Ail,'fro')^2;
 
-ssr1 = sum(sum(sum(XHkl))) + sum(sum(sum(XHil)));
+%ssr1 = sum(sum(sum(XHkl))) + sum(sum(sum(XHil)));
+ssr1 = sum(XHkl + mhkl) + sum(XHil + mhil) + mha;
+
 ssr2 = 1;
 
 %Ckl = ones(sz(3)*sz(4),R);
@@ -115,9 +131,12 @@ while abs(ssr1 - ssr2) > abs(ssr2)*eps && abs(ssr1 - ssr2)/abs(ssr2) > eps && it
     KL = sz(3)*sz(4);
     
     %Pkl Estimation
+    if iter > 1
     for kl = 1:KL
         [U,~,V] = svds(Bkl(:,:,kl)*Bskl,R);
         Pkl(:,:,kl) = U(:,:)*V(:,:)';
+    end
+    else
     end
     
     %Bskl estimation
@@ -224,9 +243,12 @@ while abs(ssr1 - ssr2) > abs(ssr2)*eps && abs(ssr1 - ssr2)/abs(ssr2) > eps && it
     IL = sz(1)*sz(4);
     
     %Pil Estimation
+    if iter > 1
     for il = 1:IL
         [U,~,V] = svds(Bil(:,:,il)*Bsil,R);
         Pil(:,:,il) = U(:,:)*V(:,:)';
+    end
+    else
     end
     
     %Bsil estimation
@@ -573,18 +595,26 @@ A1 = Ail + Akl;
 %     end
     
     for kl = 1:sz(3)*sz(4)
-       XHkl(:,:,kl) = Xkl(:,:,kl) - Bkl(:,:,kl)*(Dkl(:,:,kl))*Akl'; %+ mkl(kl)*norm(Bkl(:,:,kl) - Pkl(:,:,kl)*Bskl,'fro')^2;
+       XHkl(kl) = norm(Xkl(:,:,kl) - Bkl(:,:,kl)*(Dkl(:,:,kl))*Akl','fro')^2; 
+       mhkl(kl) = mkl(kl)*norm(Bkl(:,:,kl) - Pkl(:,:,kl)*Bskl,'fro')^2;
     end
     
     for il = 1:sz(3)*sz(4)
-       XHil(:,:,il) = Xil(:,:,il) - Bil(:,:,il)*(Dil(:,:,il))*Ail';% + mil(il).*norm(Bil(:,:,il) - Pil(:,:,il)*Bsil,'fro')^2; 
+       XHil(il) = norm(Xil(:,:,il) - Bil(:,:,il)*(Dil(:,:,il))*Ail','fro')^2;
+       mhil(il) = mil(il).*norm(Bil(:,:,il) - Pil(:,:,il)*Bsil,'fro')^2; 
     end
+    
+    mha = mA*norm(Akl - Ail,'fro')^2;
     
     %ssr2 = norm(sum(sum(sum(XHkl)))^2 + sum(sum(sum(XHil)))^2); % + norm(mA.*(Akl - Ail),'fro')^2);%/norm(Xijkl(:));
     
     %ssr2 = sqrt(sum(sum(sum(XHkl)))^2)/norm(sum(XHkl,3));% + sqrt(sum(sum(sum(XHil)))^2)/norm(sum(XHil,3));
     
-    ssr2 = norm(XHkl(:)) + norm(XHil(:));
+    %ssr2 = norm(XHkl(:)) + norm(XHil(:));
+    
+    %ssr2 = norm(XHkl(:))^2 + norm(mhkl(:))^2 + norm(XHil(:))^2 + norm(mhil(:))^2 + mha;
+    
+    ssr2 = (sum(XHkl) + sum(mhkl))/YNorm + (sum(XHil) + sum(mhil))/YNorm + mha;
     
     %ssr2 = sum(sum(sum(sum((Xijkl - XHijkl).^2))));
     SSR(iter) = ssr2;
@@ -637,7 +667,7 @@ A1 = Ail + Akl;
     %Major problem here with the coupling constant
     if iter < coupit
         if iter == 1
-            mA = (norm(sum(XHkl,3),'fro') + norm(sum(XHil,3),'fro'))/norm(Akl-Ail,'fro');
+            mA = (norm(sum(XHkl,3),'fro') + norm(sum(XHil,3),'fro'));
         end
 
     %mA = min(1.05*abs(sum(sum(Ail-Akl))),1e3);

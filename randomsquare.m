@@ -4,7 +4,7 @@ function [X,F,D,A,sfpts] = randomsquare
 
 %settings
 numMSp = 20;
-numFac = 4;
+numFac = 5;
 mzs = 761;
 jitter1 = 1.5;
 jitter2 = 25;
