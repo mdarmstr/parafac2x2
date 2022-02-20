@@ -1,6 +1,6 @@
-function [F,A,D,pvar,ssr] = nnparafac2x2mdsa(varargin)
+function [F,A,D,pvar,ssr] = parafac2x2(varargin)
 %[F,A,D,pvar,ssr,timeOut] =
-%nnPARAFAC2x2(Xijkl,R,eps,maxiter,displ,animate,Bkli,Dkli,Akli,Bskli,Bili,Dili,Aili,Bsili)
+%parafac2x2(Xijkl,R,eps,maxiter,displ,animate,Bkli,Dkli,Akli,Bskli,Bili,Dili,Aili,Bsili)
 %
 %INPUTS
 %Xijkl := 4 way tensor with drift across i and k.
@@ -51,6 +51,10 @@ function [F,A,D,pvar,ssr] = nnparafac2x2mdsa(varargin)
 %These are determined automatically if not otherwise indicated.
 %
 %(c) Michael Sorochan Armstrong, James J. Harynuk 2022
+%
+%This software has been stress-tested, and it is the hope of the developers
+%that it works for its intended purposes. If it does not, please email the
+%corresponding author: mdarmstr@ualberta.ca
 
 
 if size(varargin,2) < 2
