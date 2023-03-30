@@ -1,6 +1,6 @@
 PARAFAC2x2 Software Package
 Michael Sorochan Armstrong, Jesper Løve Hinrich, A. Paulina de la Mata, and James J. Harynuk
-(DOI GOES HERE)
+(https://doi.org/10.1016/j.aca.2023.340909)
 
 Software for deconvolving factors in 4th order tensors with drift in 2 modes. 
 
